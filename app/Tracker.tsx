@@ -38,23 +38,25 @@ const AlarmScreen = () => {
   const registerBackgroundTask = async () => {
     const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_TASK_NAME);
     if (isRegistered) {
-      console.log("Background task is already registered.");
+      alert("Background task is already registered.");
+      await BackgroundFetch.setMinimumIntervalAsync(60*2)
       return;
     }
   
     const status = await BackgroundFetch.getStatusAsync();
     if (status === BackgroundFetch.BackgroundFetchStatus.Restricted || status === BackgroundFetch.BackgroundFetchStatus.Denied) {
-      console.log("Background fetch is disabled");
+      alert("Background fetch is disabled");
       return;
     }
   
     await BackgroundFetch.registerTaskAsync(BACKGROUND_TASK_NAME, {
-      minimumInterval: 60 * 60 * 24, 
+      minimumInterval: 60 * 2, 
       stopOnTerminate: false,
       startOnBoot: true,
     });
+    
   
-    console.log("Background task registered successfully");
+    alert("Background task registered successfully");
   };
 
   // const registerNotificationTask = async () => {
@@ -133,7 +135,7 @@ const AlarmScreen = () => {
         // identifier:'daydream_reminder',
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: frequency * 60,
+          seconds: Number(frequency * 60),
           repeats:true
         },
       });
@@ -232,6 +234,7 @@ const AlarmScreen = () => {
         )}
         </View>
       )}
+      <Text className="mt-4 text-gray-100 text-lg "> Todays Log:</Text>
       {logs.length > 0 ? (
   logs.map((log) => (
     <View key={log.timestamp} className="p-2 bg-gray-800 rounded-lg my-1">
@@ -304,6 +307,7 @@ async function registerForPushNotificationsAsync() {
 
 TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
   console.log("Running background task for uploading logs...");
+  await AsyncStorage.removeItem(LOGS_KEY); 
 
   try {
     const user = auth.currentUser;
